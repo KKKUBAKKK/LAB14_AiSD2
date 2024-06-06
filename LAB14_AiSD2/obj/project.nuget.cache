@@ -1,0 +1,11 @@
+{
+  "version": 2,
+  "dgSpecHash": "UZ3YiobBlIf7+LydrR/+HXsQJj1BHLxJKRvQyI9X9n1rGIdOOCNVK85iyJ08x+2R1YBP9V+OFkpaFx3v0/8CBA==",
+  "success": true,
+  "projectFilePath": "/Users/jakubkindracki/RiderProjects/LAB14_AiSD2/LAB14_AiSD2/LAB14_AiSD2.csproj",
+  "expectedPackageFiles": [
+    "/Users/jakubkindracki/.nuget/packages/microsoft.netframework.referenceassemblies/1.0.3/microsoft.netframework.referenceassemblies.1.0.3.nupkg.sha512",
+    "/Users/jakubkindracki/.nuget/packages/microsoft.netframework.referenceassemblies.net471/1.0.3/microsoft.netframework.referenceassemblies.net471.1.0.3.nupkg.sha512"
+  ],
+  "logs": []
+}
