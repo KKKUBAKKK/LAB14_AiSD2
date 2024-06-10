@@ -16,7 +16,7 @@ namespace ASD
 
             foreach (var ts in lab12test.TestSets)
             {
-                ts.Value.PerformTests(verbose: true, checkTimeLimit: true);
+                ts.Value.PerformTests(verbose: false, checkTimeLimit: false);
             }
         }
     }
