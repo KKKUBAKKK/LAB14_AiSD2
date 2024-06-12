@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.Remoting.Lifetime;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -20,139 +21,85 @@ namespace Labratoria_ASD2_2024
         /// </summary>
         /// <param name="text">Tekst wejściowy</param>
         /// <returns>Tablica znalezionych palindromów</returns>
-        public (int startIndex, int length)[] FindPalindromes(string text) // moze zepsulaby sie zlozonosc ale najlatwiej by bylo wstawic znak specjalny miedzy kazda litere i traktowac kazde string jako nieparzysty
+        public (int startIndex, int length)[] FindPalindromes(string text)
         {
             var R = Manacher(text);
-            List<(int startIndex, int length)> res = new List<(int startIndex, int length)>();
 
-            (int startIndex, int length) temp = (0, 0);
-            for (int i = 1; i < text.Length; i++)
+            List<(int startIndex, int length)> maxPalindromes = new List<(int startIndex, int length)>();
+            (int startIndex, int length) palindrome = (-1, -1);
+            for (int i = 1; i <= text.Length; i++)
             {
-                var t = (i - Math.Max(R[0, i], R[1, i]), Math.Max(2 * R[0, i], 2 * R[1, i] + 1));
+                (int startIndex, int length) temp = (i - R[0, i] - 1, 2 * R[0, i]);
+                if (temp.length < 2 * R[1, i] + 1)
+                    temp = (i - R[1, i] - 1, 2 * R[1, i] + 1);
 
-                if ((t.Item1 <= temp.startIndex && t.Item1 + t.Item2 >= temp.startIndex) ||
-                    (temp.startIndex == 0 && temp.length == 0))
+                if (temp.length == 0)
+                    continue;
+                
+                if (palindrome.startIndex == -1)
                 {
-                    temp = t;
+                    palindrome = temp;
+                    continue;
+                }
+
+                if (Intersection(palindrome.startIndex, palindrome.startIndex + palindrome.length - 1,
+                    temp.startIndex, temp.startIndex + temp.length - 1))
+                {
+                    if (temp.length > palindrome.length)
+                        palindrome = temp;
                 }
                 else
                 {
-                    res.Add(temp);
-                    temp = t;
+                    maxPalindromes.Add(palindrome);
+                    palindrome = temp;
                 }
             }
-            
-            return res.ToArray();
+            if (palindrome.startIndex != -1 && palindrome.length != 0 && (maxPalindromes.Count == 0 ||
+                maxPalindromes.Last().startIndex != palindrome.startIndex))
+                maxPalindromes.Add(palindrome);
+
+            return maxPalindromes.ToArray();
         }
-        
+
+        public bool Intersection(int s1, int e1, int s2, int e2)
+        {
+            return Math.Max(s1, s2) <= Math.Min(e1, e2);
+        }
+
         public int[,] Manacher(string text)
         {
-            var R = new int[2, text.Length];
+            int n = text.Length;
+            text = "#" + text + "$";
+            int[,] R = new int[2, n + 2];
 
-            for (int i = 1; i < text.Length;)
+            for (int j = 0; j <= 1; j++)
             {
-                if (R[0, i] != 0 || R[1, i] != 0)
+                R[j, 0] = 0;
+                int i = 1;
+                int rp = 0;
+
+                while (i <= n)
                 {
-                    i += Math.Max(R[0, i], R[1, i]);
-                    continue;
+                    while (text[i - rp - 1] == text[i + j + rp])
+                        rp++;
+                    
+                    R[j, i] = rp;
+                    int k = 1;
+                    
+                    while (R[j, i - k] != rp - k && k < rp)
+                    {
+                        R[j, i + k] = Math.Min(R[j, i - k], rp - k);
+                        k++;
+                    }
+
+                    rp = Math.Max(rp - k, 0);
+                    i += k;
                 }
-                R[0, i] = FindMaxREven(text, i);
-                R[1, i] = FindMaxROdd(text, i);
-
-                MarkPalindromesInsideEven(text, i, R);
-                MarkPalindromesInsideOdd(text, i, R);
-
-                i += Math.Max(R[0, i], R[1, i]) + 1;
             }
-            
+
+            text = text.Substring(1, n);
+
             return R;
         }
-
-        public int FindMaxREven(string text, int i)
-        {
-            int rp = 0;
-            while (i - 1 - rp >= 0 && i + rp < text.Length && text[i - 1 - rp] == text[i + rp])
-                rp++;
-
-            return rp;
-        }
-
-        public int FindMaxROdd(string text, int i)
-        {
-            int rp = 0;
-            while (i + rp + 1 < text.Length && i - rp - 1 >= 0 && text[i - 1 - rp] == text[i + rp + 1])
-                rp++;
-
-            return rp;
-        }
-
-        public void MarkPalindromesInsideEven(string text, int i, int[,] R)
-        {
-            int rp = R[0, i];
-
-            if (rp == 0)
-                return;
-            
-            for (int k = 1; k <= rp; k++)
-            {
-                CopyPalindromeEven(text, i, rp, k, R[0, i - k], R);
-                CopyPalindromeOdd(text, i , rp, k, R[1, i - k], R);
-            }
-        }
-        
-        public void MarkPalindromesInsideOdd(string text, int i, int[,] R)
-        {
-            int rp = R[1, i];
-
-            if (rp == 0)
-                return;
-            
-            for (int k = 1; k <= rp; k++)
-            {
-                CopyPalindromeEven(text, i, rp, k, R[0, i - k], R);
-                CopyPalindromeOdd(text, i , rp, k, R[1, i - k], R);
-            }
-        }
-
-        public void CopyPalindromeEven(string text, int i, int rp, int k, int r, int[,] R)
-        {
-            if (rp == 0)
-                return;
-
-            if (r < rp - k)
-            {
-                R[0, i + k - 1] = r;
-                return;
-            }
-
-            if (r == rp - k)
-            {
-                R[0, i + k - 1] = FindMaxREven(text, i + k - 1);
-                MarkPalindromesInsideEven(text, i + k - 1, R);
-            }
-
-            R[0, i + k - 1] = rp - k;
-        }
-
-        public void CopyPalindromeOdd(string text, int i, int rp, int k, int r, int[,] R)
-        {
-            if (rp == 0)
-                return;
-
-            if (r < rp - k)
-            {
-                R[1, i + k] = r;
-                return;
-            }
-
-            if (r == rp - k)
-            {
-                R[1, i + k] = FindMaxROdd(text, i + k);
-                MarkPalindromesInsideOdd(text, i + k, R);
-            }
-
-            R[1, i + k] = rp - k;
-        }
     }
-
 }
