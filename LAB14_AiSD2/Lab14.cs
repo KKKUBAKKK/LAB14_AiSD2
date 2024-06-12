@@ -26,44 +26,18 @@ namespace Labratoria_ASD2_2024
             var R = Manacher(text);
 
             List<(int startIndex, int length)> maxPalindromes = new List<(int startIndex, int length)>();
-            (int startIndex, int length) palindrome = (-1, -1);
             for (int i = 1; i <= text.Length; i++)
             {
                 (int startIndex, int length) temp = (i - R[0, i] - 1, 2 * R[0, i]);
-                if (temp.length < 2 * R[1, i] + 1)
-                    temp = (i - R[1, i] - 1, 2 * R[1, i] + 1);
-
-                if (temp.length == 0)
-                    continue;
+                if (temp.length > 1)
+                    maxPalindromes.Add(temp);
                 
-                if (palindrome.startIndex == -1)
-                {
-                    palindrome = temp;
-                    continue;
-                }
-
-                if (Intersection(palindrome.startIndex, palindrome.startIndex + palindrome.length - 1,
-                    temp.startIndex, temp.startIndex + temp.length - 1))
-                {
-                    if (temp.length > palindrome.length)
-                        palindrome = temp;
-                }
-                else
-                {
-                    maxPalindromes.Add(palindrome);
-                    palindrome = temp;
-                }
+                temp = (i - R[1, i] - 1, 2 * R[1, i] + 1);
+                if (temp.length > 1)
+                    maxPalindromes.Add(temp);
             }
-            if (palindrome.startIndex != -1 && palindrome.length != 0 && (maxPalindromes.Count == 0 ||
-                maxPalindromes.Last().startIndex != palindrome.startIndex))
-                maxPalindromes.Add(palindrome);
 
             return maxPalindromes.ToArray();
-        }
-
-        public bool Intersection(int s1, int e1, int s2, int e2)
-        {
-            return Math.Max(s1, s2) <= Math.Min(e1, e2);
         }
 
         public int[,] Manacher(string text)
@@ -74,17 +48,14 @@ namespace Labratoria_ASD2_2024
 
             for (int j = 0; j <= 1; j++)
             {
-                R[j, 0] = 0;
-                int i = 1;
                 int rp = 0;
 
-                while (i <= n)
+                for (int i = 1, k = 1; i <= n; i += k, k = 1)
                 {
-                    while (text[i - rp - 1] == text[i + j + rp])
+                    while (text[i - rp - 1] == text[i + rp + j])
                         rp++;
                     
                     R[j, i] = rp;
-                    int k = 1;
                     
                     while (R[j, i - k] != rp - k && k < rp)
                     {
@@ -93,7 +64,6 @@ namespace Labratoria_ASD2_2024
                     }
 
                     rp = Math.Max(rp - k, 0);
-                    i += k;
                 }
             }
 
